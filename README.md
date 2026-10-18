@@ -20,3 +20,17 @@ end
 ```
 
 Install the gem with `gem install licensebox` once published, or build it using `gem build licensebox.gemspec`. `Licensebox::Error#code` preserves the protocol error. API methods: `lease`, `require`, `status`, `sign_in(timeout:)`, `logout`, `modules`, `requests`, `request_access(modules, note:)`, `access_link`, `record(command, success:, elapsed:)`, and `close`. Helpers live on `Licensebox`: `derive_binding`, `native_binding`, `verify_lease`.
+
+## Optional heartbeat checkpoints
+
+Call `client.heartbeat("core")` with a module name to force a silent server check. It returns
+`{"lease": ..., "online": true}` after contact, or `online: false` only while
+an already verified offline lease remains valid. Heartbeat never activates,
+transfers a seat or creates an installation key; sign in explicitly first.
+Explicit refusals and removed module grants stop access immediately.
+
+Background work remains opt-in. Schedule checkpoints in your application's own
+runtime/event loop and stop protected work at the last verified lease's `expires`
+time even if a renewal hangs. Use the signed `heartbeat.interval_seconds` when
+present (otherwise a 300-second interval is a reasonable default); a failed
+contact never extends the signed deadline. This SDK starts no heartbeat threads.

@@ -129,6 +129,7 @@ module Licensebox
     end
     private :call, :synchronize
     def lease; call('lease'); end
+    def heartbeat(module_name); call('heartbeat', module: Licensebox.argument(module_name)); end
     def require(module_name); call('require', module: Licensebox.argument(module_name)); end
     def status; call('status'); end
     def sign_in(timeout: 0); raise Error.new('invalid_argument') unless timeout.finite?; call('sign_in', timeout: timeout); end
