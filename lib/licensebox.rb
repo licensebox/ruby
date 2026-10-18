@@ -2,7 +2,7 @@
 require 'fiddle/import'
 require 'json'
 module Licensebox
-  VERSION = '0.1.0'
+  VERSION = '0.2.0'
   class Error < StandardError
     attr_reader :code
     def initialize(code, detail = code); @code = code; super("licensebox: #{detail}"); end
