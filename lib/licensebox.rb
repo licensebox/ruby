@@ -2,7 +2,7 @@
 require 'fiddle/import'
 require 'json'
 module Licensebox
-  VERSION = '0.3.0'
+  VERSION = '0.4.0'
   class Error < StandardError
     attr_reader :code
     def initialize(code, detail = code); @code = code; super("licensebox: #{detail}"); end
@@ -67,11 +67,12 @@ module Licensebox
   # Trusted platform seams are callables, never serialized options. Callbacks may
   # not reenter this client. All callbacks stay strongly referenced until close.
   class Client
+    # enrol_token: a service account's one-time token; nil reads LICENSEBOX_ENROL_TOKEN.
     def initialize(product:, keys:, version: '', server: nil, directory: nil, ca_bundle: nil,
-                   clock: nil, machine_binding: nil, on_sign_in: nil, cancelled: nil)
+                   clock: nil, machine_binding: nil, on_sign_in: nil, cancelled: nil, enrol_token: nil)
       options = { product: Licensebox.argument(product), keys: keys, version: Licensebox.argument(version) }
       keys.each { |k,v| Licensebox.argument(k); Licensebox.argument(v) }
-      {server: server, directory: directory, ca_bundle: ca_bundle}.each { |k,v| options[k] = Licensebox.argument(v) unless v.nil? }
+      {server: server, directory: directory, ca_bundle: ca_bundle, enrol_token: enrol_token}.each { |k,v| options[k] = Licensebox.argument(v) unless v.nil? }
       @mutex = Mutex.new
       @callbacks = []
       wrap = ->(result, types, fallback, &block) {
@@ -138,6 +139,11 @@ module Licensebox
     def requests; call('requests'); end
     def request_access(modules, note: ''); call('request', modules: modules.map { |v| Licensebox.argument(v) }, note: Licensebox.argument(note)); end
     def access_link; call('access-link'); end
+    # Service accounts and floating copies. require checks a floating module out
+    # by itself; checkin returns copies (none named returns every copy).
+    def enrol(token); call('enrol', token: Licensebox.argument(token)); end
+    def checkout(module_name); call('checkout', module: Licensebox.argument(module_name)); end
+    def checkin(*modules); call('checkin', modules: modules.map { |v| Licensebox.argument(v) }); end
     def record(command, success:, elapsed:)
       raise Error.new('invalid_argument') unless [true,false].include?(success) && elapsed.finite? && elapsed >= 0
       call('record', command: Licensebox.argument(command), success: success, elapsed: elapsed)
